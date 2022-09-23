@@ -1,5 +1,3 @@
-import { useState } from 'react'
-
 const PersonForm = (props) => {
 
     const {addPerson, newName, newNumber, handleNameChange, handleNumberChange} = props
