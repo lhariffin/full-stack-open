@@ -22,40 +22,54 @@ const App = () => {
       })
     }, [])
 
+  const createPerson = () => {
+    const personObject = {
+      name: newName,
+      number: newNumber
+    }
+    personService
+      .create(personObject)
+      .then(returnedPerson => {
+        setPersons(persons.concat(returnedPerson))
+      })
+    setNotifMessage({
+      type: 'valid',
+      message: `Added ${personObject.name}`
+    })
+    setTimeout(() => {
+      setNotifMessage({type: null, message: null})
+    }, 5000);
+  }
+
+  const updatePerson = () => {
+    const person = persons.find(person => person.name === newName)
+    const updatedPerson = {
+      ...person,
+      number: newNumber
+    }
+    personService
+      .update(updatedPerson.id, updatedPerson)
+      .then(returnedPerson => {
+        setPersons(persons.map(person => person.id === returnedPerson.id ? returnedPerson : person))
+      })
+      .catch(error => {
+        setNotifMessage({
+          type: 'error',
+          message: `Information of ${updatedPerson.name} has already been removed from server`
+        })
+        setPersons(persons.filter(person => person.id !== updatedPerson.id ))
+      })
+  }
+
   // Event handlers
   const addPerson = (event) => {
     event.preventDefault()
     if(persons.every((person) => person.name !== newName)) {
-        const personObject = {
-            name: newName,
-            number: newNumber
-        }
-        personService
-          .create(personObject)
-          .then(returnedPerson => {
-            setPersons(persons.concat(returnedPerson))
-          })
-        const notif = {
-          type: 'valid',
-          message: `Added ${personObject.name}`
-        }
-        setNotifMessage(notif)
-        setTimeout(() => {
-          setNotifMessage({type: null, message: null})
-        }, 5000);
+        createPerson()
     }
     else {
       if(window.confirm(`${newName} is already added to the phonebook. Do you want to replace the old number with the new one?`)) {
-        const person = persons.find(person => person.name === newName)
-        const updatedPerson = {
-          ...person,
-          number: newNumber
-        }
-        personService
-          .update(updatedPerson.id, updatedPerson)
-          .then(returnedPerson => {
-            setPersons(persons.map(person => person.id === returnedPerson.id ? returnedPerson : person))
-          })
+        updatePerson()
       }
     }
     setNewName('')
@@ -67,9 +81,20 @@ const App = () => {
     if(window.confirm(`Are you sure you want to remove ${person.name}?`)) {
       personService
         .remove(id)
-        .then( () =>
+        .then( () => {
+          setNotifMessage({
+            type: 'valid',
+            message: `Information of ${person.name} has been removed from server`
+          })
           setPersons(persons.filter(person => person.id !== id ))
-        )
+        })
+        .catch(error => {
+          setNotifMessage({
+            type: 'error',
+            message: `Information of ${person.name} has already been removed from server`
+          })
+          setPersons(persons.filter(person => person.id !== id ))
+        })
     }
   }
 
